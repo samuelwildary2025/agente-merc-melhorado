@@ -450,8 +450,7 @@ def busca_lote_produtos(produtos: list[str]) -> str:
                 logger.warning(f"❌ [BUSCA LOTE] Falha ao fazer parse dos candidatos para '{produto}'. Texto: {ean_result[:50]}...")
                 return {"produto": produto, "erro": "EAN não extraído", "preco": None}
             
-            # 3. Encontrar o candidato mais relevante
-            # PREFERÊNCIAS (Hardcoded para garantir acerto em termos genéricos)
+            # 3. Encontrar os melhores candidatos (Ranking)
             PREFERENCIAS = {
                 "frango": ["abatido", "resfriado", "inteiro", "congelado"],
                 "leite": ["liquido", "caixa", "integral", "litro"],
@@ -462,8 +461,6 @@ def busca_lote_produtos(produtos: list[str]) -> str:
             }
             
             produto_lower = produto.lower()
-            melhor_candidato = candidatos[0]
-            melhor_score = -1
             
             # Termos de preferência para este produto (se houver)
             termos_preferidos = []
@@ -472,51 +469,56 @@ def busca_lote_produtos(produtos: list[str]) -> str:
                     termos_preferidos = termos
                     break
 
+            candidatos_pontuados = []
+
             for c in candidatos:
                 nome_lower = c["nome"].lower()
                 score = 0
                 
                 # 1. Match de palavras da busca (Base)
-                # Conta quantas palavras da busca estão no nome
                 score += sum(2 for palavra in produto_lower.split() if palavra in nome_lower)
                 
                 # 2. Bonus por match exato da frase
                 if produto_lower in nome_lower:
                     score += 5
                 
-                # 3. Bonus por Preferências (Logica de "Dicionário")
-                # Se o nome do produto contém um termo preferido, ganha pontos extras
-                # Quanto mais no início da lista de preferência, mais pontos
+                # 3. Bonus por Preferências
                 for i, termo in enumerate(termos_preferidos):
                     if termo in nome_lower:
-                        score += (10 - i) # 10 pts pro primeiro, 9 pro segundo...
-                        break # Conta apenas o termo mais prioritário encontrado
+                        score += (10 - i)
+                        break
                 
-                # 4. Penalidade por tamanho (preferir nomes mais curtos/diretos)
-                # Subtrai um pouco baseado no tamanho excedente
+                # 4. Penalidade por tamanho
                 score -= len(nome_lower) * 0.05
                 
-                if score > melhor_score:
-                    melhor_score = score
-                    melhor_candidato = c
+                candidatos_pontuados.append((score, c))
             
-            ean = melhor_candidato["ean"]
-            logger.info(f"👉 [BUSCA LOTE] Item: '{produto}' | Melhor Candidato: '{melhor_candidato['nome']}' (EAN: {ean}) | Score: {melhor_score:.2f}")
+            # Ordenar por score (maior para menor)
+            candidatos_pontuados.sort(key=lambda x: x[0], reverse=True)
             
-            # 4. Buscar preço
-            preco_result = estoque_preco(ean)
-            logger.info(f"💲 [API ESTOQUE] Retorno para EAN {ean}: {preco_result[:200]}...")
-            try:
-                preco_data = json.loads(preco_result)
-                if preco_data and isinstance(preco_data, list) and len(preco_data) > 0:
-                    item = preco_data[0]
-                    nome = item.get("produto", item.get("nome", produto))
-                    preco = item.get("preco", 0)
-                    return {"produto": nome, "erro": None, "preco": preco, "ean": ean}
-            except:
-                pass
+            # 4. Tentar buscar preço nos Top 3 candidatos (Retry Logic)
+            for score, candidato in candidatos_pontuados[:3]:
+                ean = candidato["ean"]
+                nome_candidato = candidato["nome"]
+                logger.info(f"👉 [BUSCA LOTE] Tentando: '{nome_candidato}' (EAN: {ean}) | Score: {score:.2f}")
+                
+                preco_result = estoque_preco(ean)
+                
+                try:
+                    preco_data = json.loads(preco_result)
+                    if preco_data and isinstance(preco_data, list) and len(preco_data) > 0:
+                        item = preco_data[0]
+                        nome = item.get("produto", item.get("nome", produto))
+                        preco = item.get("preco", 0)
+                        logger.info(f"✅ [BUSCA LOTE] Sucesso com '{nome}' (R$ {preco})")
+                        return {"produto": nome, "erro": None, "preco": preco, "ean": ean}
+                    else:
+                        logger.info(f"⚠️ [BUSCA LOTE] '{nome_candidato}' sem estoque/preço. Tentando próximo...")
+                except Exception as e:
+                    logger.warning(f"Erro ao processar retorno de preço para {ean}: {e}")
             
-            return {"produto": produto, "erro": "Preço não encontrado", "preco": None}
+            logger.warning(f"❌ [BUSCA LOTE] Nenhum dos top 3 candidatos para '{produto}' tinha estoque.")
+            return {"produto": produto, "erro": "Indisponível (sem estoque)", "preco": None}
             
         except Exception as e:
             logger.error(f"Erro ao buscar {produto}: {e}")
