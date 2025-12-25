@@ -6,6 +6,7 @@ import json
 from typing import Dict, Any
 from config.settings import settings
 from config.logger import setup_logger
+from .db_search import search_products_postgres
 
 logger = setup_logger(__name__)
 

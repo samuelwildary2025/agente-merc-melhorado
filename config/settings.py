@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     
     # Banco de Produtos (Postgres)
     # Se for o mesmo banco, pode usar a mesma connection string
-    products_db_connection_string: Optional[str] = "postgres://samuelwildary:85885885@sistema_db-agente:5432/db-agente?sslmode=disable"
+    products_db_connection_string: Optional[str] = "postgres://samuelwildary:85885885@31.97.252.6:3043/db-agente?sslmode=disable"
     
     # Redis
     redis_host: str = "localhost"
