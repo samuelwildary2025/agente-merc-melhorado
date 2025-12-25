@@ -20,6 +20,8 @@ def search_products_postgres(query: str) -> str:
 
     # Remove aspas para evitar injeção/erros básicos
     query = query.replace("'", "").replace('"', "")
+    
+    table_name = settings.postgres_products_table_name
 
     try:
         with psycopg2.connect(conn_str) as conn:
@@ -27,9 +29,9 @@ def search_products_postgres(query: str) -> str:
                 
                 # 1. Se for numérico, busca exata por EAN primeiro
                 if query.isdigit():
-                    sql = """
+                    sql = f"""
                         SELECT ean, nome 
-                        FROM "produtos-sp-queiroz"
+                        FROM "{table_name}"
                         WHERE ean = %s
                         LIMIT 5
                     """
@@ -48,9 +50,9 @@ def search_products_postgres(query: str) -> str:
                 if len(query) < 3:
                      # Busca simples para termos muito curtos (ex: "uvas")
                     term = f"%{query}%"
-                    sql = """
+                    sql = f"""
                         SELECT ean, nome
-                        FROM "produtos-sp-queiroz"
+                        FROM "{table_name}"
                         WHERE nome_unaccent ILIKE %s OR nome ILIKE %s
                         ORDER BY LENGTH(nome) ASC
                         LIMIT 10
@@ -61,9 +63,9 @@ def search_products_postgres(query: str) -> str:
                     # Ordena por:
                     # 1. Similaridade (maior score = melhor match)
                     # 2. Tamanho do nome (menor = mais chance de ser o produto principal e não um acessório)
-                    sql = """
+                    sql = f"""
                         SELECT ean, nome, SIMILARITY(nome_unaccent, %s) as score
-                        FROM "produtos-sp-queiroz"
+                        FROM "{table_name}"
                         WHERE 
                             nome_unaccent ILIKE %s -- Garante que contém a palavra (filtro rápido)
                             OR SIMILARITY(nome_unaccent, %s) > 0.1 -- Ou é similar (pega typos)

@@ -27,9 +27,11 @@ class Settings(BaseSettings):
     # Postgres
     postgres_connection_string: str
     postgres_table_name: str = "memoria"
+    postgres_products_table_name: str = "produtos-sp-queiroz"  # Nova variável para tabela de produtos
     postgres_message_limit: int = 8
     
     # Banco de Produtos (Postgres)
+    # Se for o mesmo banco, pode usar a mesma connection string
     products_db_connection_string: Optional[str] = "postgres://samuelwildary:85885885@sistema_db-agente:5432/db-agente?sslmode=disable"
     
     # Redis
