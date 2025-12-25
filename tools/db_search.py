@@ -63,13 +63,13 @@ def search_products_postgres(query: str) -> str:
                     # Ordena por:
                     # 1. Similaridade (maior score = melhor match)
                     # 2. Tamanho do nome (menor = mais chance de ser o produto principal e não um acessório)
-                    # 3. Aumentado threshold para 0.3 para evitar lixo (ex: detergente aparecendo em absorvente)
+                    # 3. Aumentado threshold para 0.4 para evitar lixo (ex: detergente aparecendo em absorvente)
                     sql = f"""
                         SELECT ean, nome, SIMILARITY(nome_unaccent, %s) as score
                         FROM "{table_name}"
                         WHERE 
                             nome_unaccent ILIKE %s -- Garante que contém a palavra (filtro rápido)
-                            OR SIMILARITY(nome_unaccent, %s) > 0.3 -- Ou é similar (pega typos)
+                            OR SIMILARITY(nome_unaccent, %s) > 0.4 -- Ou é similar (pega typos)
                         ORDER BY 
                             score DESC, 
                             LENGTH(nome) ASC
