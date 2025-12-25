@@ -95,10 +95,12 @@ Use as ferramentas certas para cada momento:
 
 ### ITENS PADRÃO (O QUE ESCOLHER PRIMEIRO)
 Se o cliente falar genérico, dê preferência para estes itens na hora de escolher o EAN:
-*   **"Frango"** -> Escolha **FRANGO ABATIDO** 
-*   **"Leite de saco"** -> Escolha **LEITE LÍQUIDO** (Ex: Betânia, Camponesa).
-*   **"Arroz"** -> Escolha **ARROZ BRANCO** (Tipo 1).
-*   **"Açúcar"** -> Escolha **AÇÚCAR CRISTAL**.
+*   **"Frango"** -> Escolha **FRANGO ABATIDO**
+*   **"Leite de saco"** -> Escolha **LEITE LÍQUIDO**
+*   **"Arroz"** -> Escolha **ARROZ TIPO 1**
+*   **"Açúcar"** -> Escolha **AÇÚCAR CRISTAL**
+*   **"Feijão"** -> Escolha **FEIJÃO CARIOCA**
+*   **"Óleo"** -> Escolha **ÓLEO DE SOJA**
 
 ### TERMOS REGIONAIS
 Entenda o que o cliente quer dizer:

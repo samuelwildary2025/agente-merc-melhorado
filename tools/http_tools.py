@@ -452,12 +452,12 @@ def busca_lote_produtos(produtos: list[str]) -> str:
             
             # 3. Encontrar os melhores candidatos (Ranking)
             PREFERENCIAS = {
-                "frango": ["abatido", "resfriado", "inteiro", "congelado"],
-                "leite": ["liquido", "caixa", "integral", "litro"],
-                "arroz": ["branco", "tipo 1", "parboilizado"],
-                "acucar": ["cristal", "demerara"],
-                "feijao": ["carioca", "preto"],
-                "oleo": ["soja", "pet"],
+                "frango": ["abatido"],
+                "leite": ["liquido"],
+                "arroz": ["tipo 1"],
+                "acucar": ["cristal"],
+                "feijao": ["carioca"],
+                "oleo": ["soja"],
             }
             
             produto_lower = produto.lower()
