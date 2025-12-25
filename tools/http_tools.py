@@ -309,9 +309,23 @@ def estoque_preco(ean: str) -> str:
             return False
 
         def _is_available(d: Dict[str, Any]) -> bool:
-            # APENAS produtos com estoque real positivo (> 0)
-            if _has_positive_qty(d):
+            # 1. Verificar se está ativo (se a flag existir)
+            # Se 'ativo' não existir, assume True por padrão
+            is_active = d.get("ativo", True)
+            if not is_active:
+                logger.debug(f"Item filtrado: ativo=False")
+                return False
+
+            # 2. Verificar Estoque
+            # Regra relaxada: Aceita estoque negativo (diferente de zero)
+            # Estoque negativo geralmente indica venda sem entrada (comum em pesáveis)
+            # Estoque zero indica indisponibilidade real
+            qty = _extract_qty(d)
+            if qty is not None and qty != 0:
                 return True
+            
+            # Se chegou aqui, estoque é 0 ou None
+            logger.debug(f"Item filtrado: quantidade={qty}")
             return False
 
         def _extract_qty(d: Dict[str, Any]) -> float | None:
