@@ -102,17 +102,6 @@ def pedidos(json_body: str) -> str:
     Returns:
         Mensagem de sucesso com resposta do servidor ou mensagem de erro
     """
-def pedidos(json_body: str) -> str:
-    """
-    Envia um pedido finalizado para o painel dos funcionários (dashboard).
-    
-    Args:
-        json_body: JSON string com os detalhes do pedido
-                   Exemplo: '{"cliente": "João", "itens": [{"produto": "Arroz", "quantidade": 1}]}'
-    
-    Returns:
-        Mensagem de sucesso com resposta do servidor ou mensagem de erro
-    """
     # Remove trailing slashed from base and from endpoint to ensure correct path
     base = settings.supermercado_base_url.rstrip("/")
     url = f"{base}/pedidos/"  # Barra final necessária para FastAPI
