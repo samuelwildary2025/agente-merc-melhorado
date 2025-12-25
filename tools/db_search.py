@@ -79,6 +79,11 @@ def search_products_postgres(query: str) -> str:
                 
                 results = cur.fetchall()
                 
+                # LOG DETALHADO DO RETORNO DO BANCO
+                logger.info(f"🔍 [POSTGRES] Busca por '{query}' retornou {len(results)} resultados:")
+                for i, r in enumerate(results):
+                    logger.info(f"   {i+1}. {r.get('nome')} (EAN: {r.get('ean')})")
+                
                 if not results:
                     return "Nenhum produto encontrado com esse termo."
                 

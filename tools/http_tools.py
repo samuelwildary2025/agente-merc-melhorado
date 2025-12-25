@@ -440,27 +440,62 @@ def busca_lote_produtos(produtos: list[str]) -> str:
             if not candidatos:
                 return {"produto": produto, "erro": "EAN não extraído", "preco": None}
             
-            # 3. Encontrar o candidato mais relevante (nome mais parecido com a busca)
-            produto_lower = produto.lower()
-            melhor_candidato = candidatos[0]  # fallback: primeiro
-            melhor_score = 0
+            # 3. Encontrar o candidato mais relevante
+            # PREFERÊNCIAS (Hardcoded para garantir acerto em termos genéricos)
+            PREFERENCIAS = {
+                "frango": ["abatido", "resfriado", "inteiro", "congelado"],
+                "leite": ["liquido", "caixa", "integral", "litro"],
+                "arroz": ["branco", "tipo 1", "parboilizado"],
+                "acucar": ["cristal", "demerara"],
+                "feijao": ["carioca", "preto"],
+                "oleo": ["soja", "pet"],
+            }
             
+            produto_lower = produto.lower()
+            melhor_candidato = candidatos[0]
+            melhor_score = -1
+            
+            # Termos de preferência para este produto (se houver)
+            termos_preferidos = []
+            for chave, termos in PREFERENCIAS.items():
+                if chave in produto_lower:
+                    termos_preferidos = termos
+                    break
+
             for c in candidatos:
                 nome_lower = c["nome"].lower()
-                # Score: quantas palavras da busca aparecem no nome
-                score = sum(1 for palavra in produto_lower.split() if palavra in nome_lower)
-                # Bonus se nome contém exatamente a busca
+                score = 0
+                
+                # 1. Match de palavras da busca (Base)
+                # Conta quantas palavras da busca estão no nome
+                score += sum(2 for palavra in produto_lower.split() if palavra in nome_lower)
+                
+                # 2. Bonus por match exato da frase
                 if produto_lower in nome_lower:
                     score += 5
+                
+                # 3. Bonus por Preferências (Logica de "Dicionário")
+                # Se o nome do produto contém um termo preferido, ganha pontos extras
+                # Quanto mais no início da lista de preferência, mais pontos
+                for i, termo in enumerate(termos_preferidos):
+                    if termo in nome_lower:
+                        score += (10 - i) # 10 pts pro primeiro, 9 pro segundo...
+                        break # Conta apenas o termo mais prioritário encontrado
+                
+                # 4. Penalidade por tamanho (preferir nomes mais curtos/diretos)
+                # Subtrai um pouco baseado no tamanho excedente
+                score -= len(nome_lower) * 0.05
+                
                 if score > melhor_score:
                     melhor_score = score
                     melhor_candidato = c
             
             ean = melhor_candidato["ean"]
-            logger.debug(f"EAN selecionado para '{produto}': {ean} - {melhor_candidato['nome']}")
+            logger.info(f"👉 [BUSCA LOTE] Item: '{produto}' | Melhor Candidato: '{melhor_candidato['nome']}' (EAN: {ean}) | Score: {melhor_score:.2f}")
             
             # 4. Buscar preço
             preco_result = estoque_preco(ean)
+            logger.info(f"💲 [API ESTOQUE] Retorno para EAN {ean}: {preco_result[:200]}...")
             try:
                 preco_data = json.loads(preco_result)
                 if preco_data and isinstance(preco_data, list) and len(preco_data) > 0:
