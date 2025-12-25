@@ -63,16 +63,17 @@ def search_products_postgres(query: str) -> str:
                     # Ordena por:
                     # 1. Similaridade (maior score = melhor match)
                     # 2. Tamanho do nome (menor = mais chance de ser o produto principal e não um acessório)
+                    # 3. Aumentado threshold para 0.3 para evitar lixo (ex: detergente aparecendo em absorvente)
                     sql = f"""
                         SELECT ean, nome, SIMILARITY(nome_unaccent, %s) as score
                         FROM "{table_name}"
                         WHERE 
                             nome_unaccent ILIKE %s -- Garante que contém a palavra (filtro rápido)
-                            OR SIMILARITY(nome_unaccent, %s) > 0.1 -- Ou é similar (pega typos)
+                            OR SIMILARITY(nome_unaccent, %s) > 0.3 -- Ou é similar (pega typos)
                         ORDER BY 
                             score DESC, 
                             LENGTH(nome) ASC
-                        LIMIT 10
+                        LIMIT 8
                     """
                     term_ilike = f"%{query}%"
                     cur.execute(sql, (query, term_ilike, query))
@@ -82,7 +83,8 @@ def search_products_postgres(query: str) -> str:
                 # LOG DETALHADO DO RETORNO DO BANCO
                 logger.info(f"🔍 [POSTGRES] Busca por '{query}' retornou {len(results)} resultados:")
                 for i, r in enumerate(results):
-                    logger.info(f"   {i+1}. {r.get('nome')} (EAN: {r.get('ean')})")
+                    score_fmt = f"{r.get('score', 0):.2f}" if 'score' in r else "N/A"
+                    logger.info(f"   {i+1}. {r.get('nome')} (EAN: {r.get('ean')}) [Score: {score_fmt}]")
                 
                 if not results:
                     return "Nenhum produto encontrado com esse termo."
