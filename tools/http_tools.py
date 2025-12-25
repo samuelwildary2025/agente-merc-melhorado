@@ -417,20 +417,25 @@ def busca_lote_produtos(produtos: list[str]) -> str:
     def buscar_produto_completo(produto: str) -> dict:
         """Busca EAN e depois preço de um produto"""
         try:
-            # 1. Buscar EAN
+            # 1. Buscar EAN (Postgres)
+            # IMPORTANTE: ean_lookup retorna uma string formatada (EANS_ENCONTRADOS: ...)
             ean_result = ean_lookup(produto)
+            
+            # Se a busca no banco falhou ou não achou nada
             if "EANS_ENCONTRADOS" not in ean_result:
+                logger.warning(f"❌ [BUSCA LOTE] Banco não retornou resultados para '{produto}'")
                 return {"produto": produto, "erro": "Não encontrado", "preco": None}
             
-            # 2. Extrair TODOS os EANs e encontrar o mais relevante
+            # 2. Parse da string de retorno do ean_lookup para extrair lista de dicts
+            # Formato esperado: "EANS_ENCONTRADOS:\n1) 123 - PRODUTO A\n2) 456 - PRODUTO B"
             import re
             
-            # Parse das linhas: "1) 243 - COXA SOBRECOXA MQ kg"
             linhas = ean_result.split('\n')
             candidatos = []
             
             for linha in linhas:
                 # Procurar padrão: número) EAN - NOME
+                # Regex flexível para pegar "1) 123 - NOME"
                 match = re.match(r'\d+\)\s*(\d+)\s*-\s*(.+)', linha.strip())
                 if match:
                     ean = match.group(1)
@@ -438,6 +443,7 @@ def busca_lote_produtos(produtos: list[str]) -> str:
                     candidatos.append({"ean": ean, "nome": nome})
             
             if not candidatos:
+                logger.warning(f"❌ [BUSCA LOTE] Falha ao fazer parse dos candidatos para '{produto}'. Texto: {ean_result[:50]}...")
                 return {"produto": produto, "erro": "EAN não extraído", "preco": None}
             
             # 3. Encontrar o candidato mais relevante
