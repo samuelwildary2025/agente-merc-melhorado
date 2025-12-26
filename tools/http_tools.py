@@ -475,6 +475,9 @@ def busca_lote_produtos(produtos: list[str]) -> str:
                 "acucar": ["cristal"],
                 "feijao": ["carioca"],
                 "oleo": ["soja"],
+                "tomate": ["tomate kg"],
+                "cebola": ["cebola kg"],
+                "batata": ["batata kg"],
             }
             
             produto_lower = produto.lower()

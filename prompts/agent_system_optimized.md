@@ -101,6 +101,8 @@ Se o cliente falar genérico, dê preferência para estes itens na hora de escol
 *   **"Açúcar"** -> Escolha **AÇÚCAR CRISTAL**
 *   **"Feijão"** -> Escolha **FEIJÃO CARIOCA**
 *   **"Óleo"** -> Escolha **ÓLEO DE SOJA**
+*   **"Tomate"** -> Escolha **TOMATE COMUM (KG)**. Não ofereça cereja/cajá se não for pedido.
+*   **"Cebola/Batata"** -> Escolha o tipo **COMUM (KG)**.
 
 ### TERMOS REGIONAIS
 Entenda o que o cliente quer dizer:
