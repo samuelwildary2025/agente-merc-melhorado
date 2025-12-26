@@ -478,6 +478,7 @@ def busca_lote_produtos(produtos: list[str]) -> str:
                 "tomate": ["tomate kg"],
                 "cebola": ["cebola kg"],
                 "batata": ["batata kg"],
+                "calabresa": ["calabresa kg"], # Prioriza a granel
             }
             
             produto_lower = produto.lower()

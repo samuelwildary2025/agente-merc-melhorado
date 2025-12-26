@@ -135,6 +135,8 @@ Se o cliente pedir por **UNIDADE**, use estes pesos médios para lançar no carr
 *   **1.500 kg:** Mamão Formosa, Melão (Espanhol/Japonês/Galia).
 *   **2.000 kg:** Melancia.
 *   **2.200 kg:** Frango Inteiro.
+*   **0.250 kg (250g):** Calabresa (1 gomo), Paio, Linguiça (unidade).
+*   **0.300 kg (300g):** Bacon (pedaço).
 *   **Outros Legumes (Tomate/Cebola/Batata):** 0.150 kg.
 
 ⚠️ **REGRA DE OURO:** Sempre avise: *"O peso é aproximado. O valor final pode variar na balança."*
