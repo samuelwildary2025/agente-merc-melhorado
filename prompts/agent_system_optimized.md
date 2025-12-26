@@ -131,7 +131,6 @@ Se o cliente pedir por **UNIDADE**, use estes pesos médios para lançar no carr
 *   **300g (0.300 kg):** Maracujá, Pitaia.
 *   **500g (0.500 kg):** Acerola, Coco Seco, Manga (Tommy/Rosa/Moscatel/Coité), Uvas (maioria).
 *   **600g (0.600 kg):** Abacate.
-*   **1.000 kg:** Melancia Baby, Melão (Redinha/Sapier).
 *   **1.500 kg:** Mamão Formosa, Melão (Espanhol/Japonês/Galia).
 *   **2.000 kg:** Melancia.
 *   **2.200 kg:** Frango Inteiro.
