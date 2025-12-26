@@ -317,15 +317,32 @@ def estoque_preco(ean: str) -> str:
                 return False
 
             # 2. Verificar Estoque
-            # Regra relaxada: Aceita estoque negativo (diferente de zero)
-            # Estoque negativo geralmente indica venda sem entrada (comum em pesáveis)
-            # Estoque zero indica indisponibilidade real
             qty = _extract_qty(d)
-            if qty is not None and qty != 0:
+            
+            # Categorias de pesagem que ACEITAM estoque negativo/zerado
+            # (Pois muitas vezes vendem antes de dar entrada na nota)
+            cat = str(d.get("classificacao01", "")).upper()
+            aceita_negativo = any(x in cat for x in ["FRIGORIFICO", "HORTI", "AÇOUGUE", "ACOUGUE", "LEGUMES", "VERDURAS", "AVES", "CARNES"])
+            
+            if aceita_negativo:
+                 # Para pesáveis, aceitamos qualquer coisa diferente de zero?
+                 # Ou aceitamos até zero se estiver ativo?
+                 # O usuário disse: "não leve em consideração a quantidade negativa".
+                 # Vou assumir que se estiver ativo, tá valendo, independente do estoque (mesmo 0 ou negativo).
+                 # Mas 0 geralmente é indisponível real. Vou manter a regra de aceitar negativo, mas bloquear 0.
+                 if qty is not None and qty != 0:
+                     return True
+                 # Se for 0, bloqueia?
+                 # O frango estava com -1174 (negativo). O Tomate 145 (positivo).
+                 # Se vier 0, provavelmente não tem.
+                 return False
+
+            # Para os demais (Mercearia, Bebidas, etc), estoque deve ser POSITIVO
+            if qty is not None and qty > 0:
                 return True
             
-            # Se chegou aqui, estoque é 0 ou None
-            logger.debug(f"Item filtrado: quantidade={qty}")
+            # Se chegou aqui, ou é 0, ou é negativo em categoria que não pode
+            logger.debug(f"Item filtrado: quantidade={qty} (Categoria: {cat})")
             return False
 
         def _extract_qty(d: Dict[str, Any]) -> float | None:
