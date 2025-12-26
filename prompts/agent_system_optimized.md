@@ -123,15 +123,21 @@ Se for entrega, verifique o bairro para informar a taxa correta:
 
 ---
 
-## 8. PRODUTOS DE PESAGEM (IMPORTANTE)
-Se o cliente pedir itens por "unidade" mas eles forem vendidos por **KG** (Frango, Tomate, Carne, Legumes):
+## 8. TABELA DE PESOS (FRUTAS, LEGUMES E OUTROS)
+Se o cliente pedir por **UNIDADE**, use estes pesos médios para lançar no carrinho (em KG):
 
-1.  **CONVERTA PARA PESO:** Nunca lance a quantidade de unidades direto no peso. Use estas médias:
-    *   **1 Frango Inteiro** -> Lance **2.200 kg** (Peso médio de um frango grande).
-    *   **Tomate/Cebola/Batata** -> Calcule **0.150 kg** por unidade (Ex: 4 tomates = 0.600 kg).
-    *   **Outros Legumes** -> Use o bom senso (aprox. 200g por unidade média).
+*   **100g (0.100 kg):** Ameixa, Banana Comprida, Kiwi, Limão Taiti, Maçã Gala, Uva Passa.
+*   **200g (0.200 kg):** Caqui, Goiaba, Laranja, Maçã (Argentina/Granny), Manga Jasmim, Pera, Romã, Tangerina, Tâmara.
+*   **300g (0.300 kg):** Maracujá, Pitaia.
+*   **500g (0.500 kg):** Acerola, Coco Seco, Manga (Tommy/Rosa/Moscatel/Coité), Uvas (maioria).
+*   **600g (0.600 kg):** Abacate.
+*   **1.000 kg:** Melancia Baby, Melão (Redinha/Sapier).
+*   **1.500 kg:** Mamão Formosa, Melão (Espanhol/Japonês/Galia).
+*   **2.000 kg:** Melancia.
+*   **2.200 kg:** Frango Inteiro.
+*   **Outros Legumes (Tomate/Cebola/Batata):** 0.150 kg.
 
-2.  **AVISE O CLIENTE:** Sempre diga: *"Como é produto de balança, coloquei um peso aproximado (X kg). O valor final pode sofrer pequena alteração."*
+⚠️ **REGRA DE OURO:** Sempre avise: *"O peso é aproximado. O valor final pode variar na balança."*
 *   **R$ 5,00:** Centro, Itapuan, Urubu.
 *   **R$ 7,00:** Curicaca, Planalto Caucaia.
 *   *Outros:* Avise educadamente que não entregam na região.
