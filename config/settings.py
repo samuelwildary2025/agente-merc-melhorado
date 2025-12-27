@@ -54,12 +54,14 @@ class Settings(BaseSettings):
     smart_responder_apikey: str = ""
     pre_resolver_enabled: bool = False
     
-    # WhatsApp / UAZ API
-    # WHATSAPP_API_URL mantido para compatibilidade, mas UAZ_API_URL tem prioridade
-    whatsapp_api_url: Optional[str] = None 
-    uaz_api_url: Optional[str] = None      # <--- NOVA VARIÁVEL ESPECÍFICA
+    # WhatsApp API (Nova Integração)
+    whatsapp_api_base_url: str = "https://sistema-whatsapp-api.5mos1l.easypanel.host"
+    whatsapp_instance_token: Optional[str] = None  # Header: X-Instance-Token
     
-    whatsapp_token: str
+    # WhatsApp / UAZ API (Legado/Compatibilidade)
+    whatsapp_api_url: Optional[str] = None 
+    uaz_api_url: Optional[str] = None
+    whatsapp_token: Optional[str] = None
     whatsapp_method: str = "POST"
     whatsapp_agent_number: str | None = None
     

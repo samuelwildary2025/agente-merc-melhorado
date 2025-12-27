@@ -275,28 +275,46 @@ def _extract_incoming(payload: Dict[str, Any]) -> Dict[str, Any]:
             telefone = re.sub(r"\D", "", raw)
             logger.warning(f"⚠️ Usando fallback de telefone: {telefone}")
 
-    # --- Extração de Conteúdo ---
-    mensagem_texto = payload.get("text")
+    # --- Extração de Conteúdo (Adaptado para nova API) ---
+    # Na nova API, 'body' é o texto e 'mediaUrl' indica mídia
+    mensagem_texto = payload.get("body") or payload.get("text")
     message_id = payload.get("id") or payload.get("messageid")
-    from_me = False
+    from_me = bool(payload.get("fromMe") or False)
     
-    raw_type = str(message_any.get("messageType") or "").lower()
-    media_type = str(message_any.get("mediaType") or "").lower()
-    base_type = str(message_any.get("type") or "").lower()
-    mimetype = str(message_any.get("mimetype") or "").lower()
+    # Determinar tipo
+    msg_type = payload.get("type") or "chat"
+    media_url = payload.get("mediaUrl")
     
     message_type = "text"
-    if "audio" in raw_type or "ptt" in media_type or "audio" in base_type:
+    if msg_type == "ptt" or msg_type == "audio":
         message_type = "audio"
-    elif "image" in raw_type or "image" in media_type or "image" in base_type:
+    elif msg_type == "image" or (media_url and "jpg" in str(media_url)):
         message_type = "image"
-    elif "document" in raw_type or "document" in base_type or "application/pdf" in mimetype:
+    elif msg_type == "document" or (media_url and "pdf" in str(media_url)):
         message_type = "document"
 
-    if isinstance(message_any, dict):
-        message_id = message_any.get("messageid") or message_any.get("id") or message_id
-        from_me = bool(message_any.get("fromMe") or message_any.get("wasSentByApi") or False)
+    # Se for mídia, tenta pegar a URL direto do payload se vier
+    if message_type in ["image", "audio", "document"] and media_url:
+        # Na nova API, a URL já vem no payload, não precisa baixar via ID às vezes
+        # Mas mantemos a lógica de ID se precisar
+        pass
+
+    # Lógica legada para garantir compatibilidade com estruturas antigas
+    if not mensagem_texto:
+        message_any = payload  # No novo formato, payload já é a mensagem
         
+        raw_type = str(message_any.get("messageType") or "").lower()
+        media_type = str(message_any.get("mediaType") or "").lower()
+        base_type = str(message_any.get("type") or "").lower()
+        mimetype = str(message_any.get("mimetype") or "").lower()
+        
+        if "audio" in raw_type or "ptt" in media_type or "audio" in base_type:
+            message_type = "audio"
+        elif "image" in raw_type or "image" in media_type or "image" in base_type:
+            message_type = "image"
+        elif "document" in raw_type or "document" in base_type or "application/pdf" in mimetype:
+            message_type = "document"
+
         content = message_any.get("content")
         if isinstance(content, str) and not mensagem_texto:
             mensagem_texto = content
@@ -312,7 +330,7 @@ def _extract_incoming(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     if from_me:
         # Se for mensagem enviada por MIM, tenta achar o destinatário
-        candidates_me = [chat.get("wa_id"), chat.get("phone"), payload.get("sender")]
+        candidates_me = [chat.get("wa_id"), chat.get("phone"), payload.get("sender"), payload.get("to")]
         telefone = next((re.sub(r"\D", "", c) for c in candidates_me if c and "@lid" not in str(c)), telefone)
 
     # --- Lógica de Mídia ---
@@ -325,28 +343,24 @@ def _extract_incoming(payload: Dict[str, Any]) -> Dict[str, Any]:
             
     elif message_type == "image":
         caption = mensagem_texto or ""
-        if message_id:
-            url = get_media_url_uaz(message_id)
-            if url: 
-                mensagem_texto = f"{caption} [MEDIA_URL: {url}]".strip()
-            else: 
-                mensagem_texto = f"{caption} [Imagem recebida - erro ao baixar]".strip()
-        else:
+        url = media_url or get_media_url_uaz(message_id)
+        if url: 
+            mensagem_texto = f"{caption} [MEDIA_URL: {url}]".strip()
+        else: 
             mensagem_texto = f"{caption} [Imagem recebida]".strip()
 
     elif message_type == "document":
-        if "pdf" in mimetype or (mensagem_texto and ".pdf" in str(mensagem_texto).lower()):
-            pdf_url = get_media_url_uaz(message_id) if message_id else None
-            pdf_text = ""
-            if message_id:
-                extracted = process_pdf_uaz(message_id)
-                if extracted:
-                    pdf_text = f"\n[Conteúdo PDF]: {extracted[:1200]}..."
-            
-            if pdf_url:
-                mensagem_texto = f"Comprovante/PDF Recebido. {pdf_text} [MEDIA_URL: {pdf_url}]"
-            else:
-                mensagem_texto = f"[PDF sem link] {pdf_text}"
+        url = media_url or get_media_url_uaz(message_id)
+        pdf_text = ""
+        if message_id:
+            extracted = process_pdf_uaz(message_id)
+            if extracted:
+                pdf_text = f"\n[Conteúdo PDF]: {extracted[:1200]}..."
+        
+        if url:
+            mensagem_texto = f"Comprovante/PDF Recebido. {pdf_text} [MEDIA_URL: {url}]"
+        else:
+            mensagem_texto = f"[PDF sem link] {pdf_text}"
 
     return {
         "telefone": telefone,
@@ -357,16 +371,7 @@ def _extract_incoming(payload: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 def send_whatsapp_message(telefone: str, mensagem: str) -> bool:
-    base = get_api_base_url()
-    if not base: return False
-    try:
-        from urllib.parse import urlparse
-        parsed = urlparse(base)
-        url = f"{parsed.scheme}://{parsed.netloc}/send/text"
-    except:
-        url = f"{base.split('/message')[0]}/send/text"
-    
-    headers = {"Content-Type": "application/json", "token": (settings.whatsapp_token or "").strip()}
+    """Envia mensagem usando a nova classe WhatsAppAPI."""
     
     # Configuração de split de mensagens
     # Max 500 chars por mensagem para não enviar textões
@@ -404,8 +409,8 @@ def send_whatsapp_message(telefone: str, mensagem: str) -> bool:
     
     try:
         for i, msg in enumerate(msgs):
-            payload = {"number": re.sub(r"\D", "", telefone or ""), "text": msg, "openTicket": "1"}
-            requests.post(url, headers=headers, json=payload, timeout=10)
+            # Usa a nova API
+            whatsapp.send_text(telefone, msg)
             
             # Delay entre mensagens para parecer mais natural (exceto última)
             if i < len(msgs) - 1:
@@ -422,18 +427,14 @@ buffer_sessions = {}
 
 def send_presence(num, type_):
     """Envia status: 'composing' (digitando) ou 'paused'."""
-    base = get_api_base_url()
-    if not base: return
-    try:
-        from urllib.parse import urlparse
-        parsed = urlparse(base)
-        url = f"{parsed.scheme}://{parsed.netloc}/message/presence"
-    except:
-        url = f"{base}/message/presence"
-    try:
-        requests.post(url, headers={"Content-Type": "application/json", "token": settings.whatsapp_token}, 
-                     json={"number": re.sub(r"\D","",num), "presence": type_}, timeout=5)
-    except: pass
+    # Mapeamento para nova API
+    # Nova API aceita: composing, recording, available, unavailable
+    # paused -> available (ou unavailable, mas available para parar de digitar)
+    status_map = {
+        "composing": "composing",
+        "paused": "available" 
+    }
+    whatsapp.send_presence(num, status_map.get(type_, "available"))
 
 def process_async(tel, msg, mid=None):
     """
