@@ -205,9 +205,22 @@ def transcribe_audio_uaz(message_id: str) -> Optional[str]:
 def _extract_incoming(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
     Normaliza e processa (Texto, Áudio, Imagem, Documento/PDF).
-    BLINDADA: Ignora LIDs e prioriza números reais.
+    Suporta payload da nova API: { "event": "message", "data": { ... } }
     """
     
+    # DEBUG CRÍTICO
+    try:
+        keys = list(payload.keys())
+        logger.info(f"🔍 DEBUG EXTRACT START: Keys={keys}")
+    except: pass
+    
+    # Se o payload vier envelopado no formato novo
+    if "data" in payload and isinstance(payload["data"], dict):
+        payload = payload["data"]
+        try:
+            logger.info(f"🔍 DEBUG EXTRACT UNWRAPPED: Keys={list(payload.keys())} | From={payload.get('from')} | Body={payload.get('body')}")
+        except: pass
+
     def _clean_number(jid: Any) -> Optional[str]:
         """Extrai apenas o número de telefone de um JID válido."""
         if not jid or not isinstance(jid, str): return None
