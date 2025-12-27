@@ -24,6 +24,7 @@ except ImportError:
 from config.settings import settings
 from config.logger import setup_logger
 from agent_langgraph_simple import run_agent_langgraph as run_agent, get_session_history
+from tools.whatsapp_api import whatsapp
 from tools.redis_tools import (
     push_message_to_buffer,
     get_buffer_length,
