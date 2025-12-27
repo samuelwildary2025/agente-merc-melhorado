@@ -540,7 +540,9 @@ async def webhook(req: Request, tasks: BackgroundTasks):
         data = _extract_incoming(pl)
         tel, txt, from_me = data["telefone"], data["mensagem_texto"], data["from_me"]
 
-        if not tel or not txt: return JSONResponse(content={"status":"ignored"})
+        if not tel or not txt: 
+            logger.warning(f"⚠️ IGNORED | Tel: {tel} | Txt: {txt} | PayloadKeys: {list(pl.keys())}")
+            return JSONResponse(content={"status":"ignored"})
         
         logger.info(f"In: {tel} | {data['message_type']} | {txt[:50]}")
 
