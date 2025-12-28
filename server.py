@@ -478,10 +478,11 @@ def process_async(tel, msg, mid=None):
     Processa mensagem do Buffer.
     Fluxo Humano:
     1. Espera (simula leitura).
-    2. Digita (composing).
-    3. Processa (IA).
-    4. Para de digitar (paused).
-    5. Envia.
+    2. Marca como LIDO (Azul).
+    3. Digita (composing).
+    4. Processa (IA).
+    5. Para de digitar (paused).
+    6. Envia.
     """
     try:
         num = re.sub(r"\D", "", tel)
@@ -490,18 +491,23 @@ def process_async(tel, msg, mid=None):
         tempo_leitura = random.uniform(2.0, 4.0) 
         time.sleep(tempo_leitura)
 
-        # 2. Começar a "Digitar"
+        # 2. Marcar como LIDO (Azul) AGORA
+        if mid:
+            logger.info(f"👀 Marcando mensagem {mid} como lida...")
+            whatsapp.mark_as_read(mid)
+
+        # 3. Começar a "Digitar"
         send_presence(num, "composing")
         
-        # 3. Processamento IA
+        # 4. Processamento IA
         res = run_agent(tel, msg)
         txt = res.get("output", "Erro ao processar.")
         
-        # 4. Parar "Digitar"
+        # 5. Parar "Digitar"
         send_presence(num, "paused")
         time.sleep(0.5) # Pausa dramática antes de chegar
 
-        # 5. Enviar Mensagem
+        # 6. Enviar Mensagem
         send_whatsapp_message(tel, txt)
 
     except Exception as e:
@@ -539,7 +545,9 @@ def buffer_loop(tel):
                 else: stall += 1
             
             # Consumir e processar mensagens
-            msgs = pop_all_messages(n)
+            # AGORA RETORNA TEXTOS E LAST_MID
+            msgs, last_mid = pop_all_messages(n)
+            
             # Usa ' | ' como separador para o agente entender que são itens/pedidos separados
             final = " | ".join([m for m in msgs if m.strip()])
             
@@ -552,7 +560,8 @@ def buffer_loop(tel):
                 final = f"{order_ctx}\n\n{final}"
             
             # Processar (enquanto isso, novas mensagens podem chegar)
-            process_async(n, final)
+            # Passa o last_mid para marcar como lido
+            process_async(n, final, mid=last_mid)
             
             # Após processar, o loop vai verificar se tem novas mensagens
             # Se tiver, processa novamente. Se não, sai.

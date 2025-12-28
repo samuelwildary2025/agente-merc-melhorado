@@ -70,6 +70,23 @@ class WhatsAppAPI:
         except Exception:
             return False
 
+    def mark_as_read(self, message_id: str) -> bool:
+        """
+        Marca a mensagem como lida (Tick Azul)
+        POST /message/read ou /chat/markMessageAsRead
+        """
+        if not self.base_url or not message_id: return False
+        
+        # Tenta endpoint padrão /message/read
+        url = f"{self.base_url}/message/read"
+        payload = {"read": True, "id": message_id}
+        
+        try:
+            resp = requests.post(url, headers=self._get_headers(), json=payload, timeout=5)
+            return resp.status_code == 200
+        except Exception:
+            return False
+
     def get_media_base64(self, message_id: str) -> Optional[Dict[str, str]]:
         """
         Obtém mídia em Base64

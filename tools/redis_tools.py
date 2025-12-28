@@ -56,29 +56,31 @@ def buffer_key(telefone: str) -> str:
     return f"msgbuf:{telefone}"
 
 
-def push_message_to_buffer(telefone: str, mensagem: str, ttl_seconds: int = 300) -> bool:
+def push_message_to_buffer(telefone: str, mensagem: str, message_id: str = None, ttl_seconds: int = 300) -> bool:
     """
     Empilha a mensagem recebida em uma lista no Redis para o telefone.
-
-    - Usa `RPUSH` para adicionar ao final da lista `msgbuf:{telefone}`.
-    - Define TTL na primeira inserção (mantém janela de expiração de 5 minutos).
+    Salva como JSON {"text": "...", "mid": "..."} para preservar o ID.
     """
     client = get_redis_client()
+    import json
+    
+    # Payload seguro
+    payload = json.dumps({"text": mensagem, "mid": message_id})
+
     if client is None:
         # Fallback em memória
         msgs = _local_buffer.get(telefone)
         if msgs is None:
-            _local_buffer[telefone] = [mensagem]
+            _local_buffer[telefone] = [payload]
         else:
-            msgs.append(mensagem)
+            msgs.append(payload)
         logger.info(f"[fallback] Mensagem empilhada em memória para {telefone}")
         return True
 
     key = buffer_key(telefone)
     try:
-        client.rpush(key, mensagem)
-        # Se não houver TTL, definir um TTL padrão para evitar lixo acumulado
-        if client.ttl(key) in (-1, -2):  # -2 = key não existe, -1 = sem TTL
+        client.rpush(key, payload)
+        if client.ttl(key) in (-1, -2):
             client.expire(key, ttl_seconds)
         logger.info(f"Mensagem empilhada no buffer: {key}")
         return True
@@ -87,43 +89,52 @@ def push_message_to_buffer(telefone: str, mensagem: str, ttl_seconds: int = 300)
         return False
 
 
-def get_buffer_length(telefone: str) -> int:
-    """Retorna o tamanho atual do buffer de mensagens para o telefone."""
-    client = get_redis_client()
-    if client is None:
-        # Fallback em memória
-        msgs = _local_buffer.get(telefone) or []
-        return len(msgs)
-    try:
-        return int(client.llen(buffer_key(telefone)))
-    except redis.exceptions.RedisError as e:
-        logger.error(f"Erro ao consultar tamanho do buffer: {e}")
-        return 0
-
-
-def pop_all_messages(telefone: str) -> list[str]:
+def pop_all_messages(telefone: str) -> Tuple[List[str], Optional[str]]:
     """
     Obtém todas as mensagens do buffer e limpa a chave.
+    Retorna (lista_de_textos, ultimo_message_id).
     """
     client = get_redis_client()
+    import json
+    
+    texts = []
+    last_mid = None
+    
     if client is None:
         # Fallback em memória
-        msgs = _local_buffer.get(telefone) or []
+        msgs_raw = _local_buffer.get(telefone) or []
         _local_buffer.pop(telefone, None)
-        logger.info(f"[fallback] Buffer consumido para {telefone}: {len(msgs)} mensagens")
-        return msgs
-    key = buffer_key(telefone)
-    try:
-        pipe = client.pipeline()
-        pipe.lrange(key, 0, -1)
-        pipe.delete(key)
-        msgs, _ = pipe.execute()
-        msgs = [m for m in (msgs or []) if isinstance(m, str)]
-        logger.info(f"Buffer consumido para {telefone}: {len(msgs)} mensagens")
-        return msgs
-    except redis.exceptions.RedisError as e:
-        logger.error(f"Erro ao consumir buffer: {e}")
-        return []
+    else:
+        key = buffer_key(telefone)
+        try:
+            pipe = client.pipeline()
+            pipe.lrange(key, 0, -1)
+            pipe.delete(key)
+            result = pipe.execute()
+            msgs_raw = result[0] if result else []
+        except redis.exceptions.RedisError as e:
+            logger.error(f"Erro ao consumir buffer: {e}")
+            return [], None
+
+    # Processar payloads
+    for raw in msgs_raw:
+        try:
+            # Tenta ler como JSON novo
+            data = json.loads(raw)
+            if isinstance(data, dict):
+                txt = data.get("text", "")
+                mid = data.get("mid")
+                if txt: texts.append(txt)
+                if mid: last_mid = mid
+            else:
+                # String antiga ou inválida
+                texts.append(str(raw))
+        except:
+            # Não é JSON, assume texto puro (retrocompatibilidade)
+            texts.append(str(raw))
+            
+    logger.info(f"Buffer consumido para {telefone}: {len(texts)} mensagens. LastID: {last_mid}")
+    return texts, last_mid
 
 
 # ============================================
