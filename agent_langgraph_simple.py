@@ -426,9 +426,27 @@ def run_agent_langgraph(telefone: str, mensagem: str) -> Dict[str, Any]:
                     # Detectar produto não encontrado
                     elif "Nenhum produto encontrado" in content or "não encontrado" in content.lower():
                         tool_results.append("nao_encontrado")
+                    # Detectar SUCESSO na busca em lote (Fallback para quando o LLM falha em responder)
+                    elif "✅ [BUSCA LOTE] Sucesso" in content:
+                        # Extrair produto e preço: "Sucesso com 'NOME' (R$ XX.XX)"
+                        match = re.search(r"Sucesso com '([^']+)' \((R\$ [0-9.,]+)\)", content)
+                        if match:
+                            prod, preco = match.groups()
+                            tool_results.append(f"sucesso:{prod}:{preco}")
             
             # Gerar resposta baseada nos resultados das tools
-            if "sem_estoque" in tool_results:
+            if any(r.startswith("sucesso:") for r in tool_results):
+                # Extrair itens encontrados
+                itens_ok = []
+                for r in tool_results:
+                    if r.startswith("sucesso:"):
+                        _, prod, preco = r.split(":", 2)
+                        itens_ok.append(f"{prod} por {preco}")
+                
+                output = "Encontrei: " + ", ".join(itens_ok) + ". Quer adicionar ao carrinho?"
+                logger.info(f"🔄 Fallback inteligente: gerando resposta de preços - {output}")
+
+            elif "sem_estoque" in tool_results:
                 if produtos_encontrados:
                     # Oferecer alternativas da lista de produtos encontrados
                     alternativas = ", ".join(produtos_encontrados[:2])
