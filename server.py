@@ -297,6 +297,12 @@ def _extract_incoming(payload: Dict[str, Any]) -> Dict[str, Any]:
     candidates.append(payload.get("from"))
     candidates.append(payload.get("sender"))
 
+    # 4. Estrutura Baileys/Key (CRUCIAL PARA MÍDIA/ÁUDIO)
+    # Procura dentro de 'key' se existir no payload
+    if isinstance(payload.get("key"), dict):
+        candidates.append(payload["key"].get("remoteJid"))
+        candidates.append(payload["key"].get("participant")) # Para grupos (embora a gente ignore grupos)
+
     # Varre a lista e pega o primeiro válido (sem LID)
     for cand in candidates:
         cleaned = _clean_number(cand)
