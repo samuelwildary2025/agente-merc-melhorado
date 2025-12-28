@@ -61,22 +61,24 @@ def search_products_postgres(query: str) -> str:
                 else:
                     # Busca inteligente com Trigram
                     # Ordena por:
-                    # 1. Similaridade (maior score = melhor match)
-                    # 2. Tamanho do nome (menor = mais chance de ser o produto principal e não um acessório)
-                    # 3. Aumentado threshold para 0.4 para evitar lixo (ex: detergente aparecendo em absorvente)
+                    # 1. Começa com o termo (Prioridade Máxima)
+                    # 2. Similaridade (maior score = melhor match)
+                    # 3. Tamanho do nome (menor = mais chance de ser o produto principal)
                     sql = f"""
                         SELECT ean, nome, SIMILARITY(nome_unaccent, %s) as score
                         FROM "{table_name}"
                         WHERE 
                             nome_unaccent ILIKE %s -- Garante que contém a palavra (filtro rápido)
-                            OR SIMILARITY(nome_unaccent, %s) > 0.4 -- Ou é similar (pega typos)
+                            OR SIMILARITY(nome_unaccent, %s) > 0.3 -- Ou é similar (pega typos)
                         ORDER BY 
+                            (CASE WHEN nome_unaccent ILIKE %s THEN 1 ELSE 0 END) DESC, -- Começa com o termo?
                             score DESC, 
                             LENGTH(nome) ASC
                         LIMIT 8
                     """
                     term_ilike = f"%{query}%"
-                    cur.execute(sql, (query, term_ilike, query))
+                    term_starts_with = f"{query}%"
+                    cur.execute(sql, (query, term_ilike, query, term_starts_with))
                 
                 results = cur.fetchall()
                 
