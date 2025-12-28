@@ -233,7 +233,7 @@ def _extract_incoming(payload: Dict[str, Any]) -> Dict[str, Any]:
         # Se tiver 'body' ou 'from', é a estrutura simplificada
         
         # Vamos tentar usar esse sub-objeto como fonte principal se ele parecer promissor
-        if sub_msg.get("key") or sub_msg.get("conversation") or sub_msg.get("body") or sub_msg.get("from") or sub_msg.get("type"):
+        if sub_msg.get("key") or sub_msg.get("conversation") or sub_msg.get("body"):
             # Mescla ou substitui, mas mantém instanceId se precisar
             # Vamos priorizar o conteúdo de 'message'
             payload.update(sub_msg)
@@ -581,9 +581,12 @@ async def webhook(req: Request, tasks: BackgroundTasks):
         pl = await req.json()
         data = _extract_incoming(pl)
         tel, txt, from_me = data["telefone"], data["mensagem_texto"], data["from_me"]
+        msg_type = data.get("message_type", "text")
 
-        if not tel or not txt: 
-            logger.warning(f"⚠️ IGNORED | Tel: {tel} | Txt: {txt} | PayloadKeys: {list(pl.keys())}")
+        # Se for áudio/imagem/doc, o texto pode vir vazio (será preenchido depois na transcrição ou OCR)
+        # Então só bloqueamos se for TEXTO e estiver vazio
+        if not tel or (not txt and msg_type == "text"): 
+            logger.warning(f"⚠️ IGNORED | Tel: {tel} | Txt: {txt} | Type: {msg_type} | PayloadKeys: {list(pl.keys())}")
             # DUMP DE DEBUG
             try:
                 import json
@@ -592,7 +595,7 @@ async def webhook(req: Request, tasks: BackgroundTasks):
             
             return JSONResponse(content={"status":"ignored"})
         
-        logger.info(f"In: {tel} | {data['message_type']} | {txt[:50]}")
+        logger.info(f"In: {tel} | {msg_type} | {txt[:50] if txt else '[Mídia]'}")
 
         if from_me:
             # Detectar Human Takeover: Se o número do agente enviou mensagem

@@ -86,6 +86,8 @@ class WhatsAppAPI:
                 data = resp.json()
                 # Tenta pegar fileURL ou url, dependendo do retorno da API
                 return data.get("fileURL") or data.get("url")
+            else:
+                logger.warning(f"⚠️ Erro API Mídia ({resp.status_code}): {resp.text}")
         except Exception as e:
             logger.error(f"Erro ao obter mídia WhatsApp ({message_id}): {e}")
             
