@@ -1,7 +1,7 @@
 """
 Servidor FastAPI para receber mensagens do WhatsApp e processar com o agente
 Suporta: Texto, Áudio (Transcrição), Imagem (Visão) e PDF (Extração de Texto + Link)
-Versão: 1.5.5 (Correção de LID e Buffer Personalizado)
+Versão: 1.6.0 (Correção de LID e Buffer Personalizado)
 """
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
@@ -39,7 +39,7 @@ from tools.redis_tools import (
 
 logger = setup_logger(__name__)
 
-app = FastAPI(title="Agente de Supermercado", version="1.6.0")
+app = FastAPI(title="Agente de Supermercado", version="1.6.0") # FORCE UPDATE CHECK
 
 # --- Models ---
 class WhatsAppMessage(BaseModel):
@@ -132,7 +132,7 @@ def transcribe_audio_uaz(message_id: str) -> Optional[str]:
     # 1. Obter URL do áudio via UAZ
     audio_url = get_media_url_uaz(message_id)
     if not audio_url:
-        logger.error(f"❌ Não foi possível obter URL do áudio: {message_id}")
+        logger.error(f"❌ [NOVO CODIGO v1.6.0] FALHA AO OBTER URL DO AUDIO: {message_id}")
         return None
     
     try:
