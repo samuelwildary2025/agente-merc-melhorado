@@ -70,16 +70,19 @@ class WhatsAppAPI:
         except Exception:
             return False
 
-    def mark_as_read(self, message_id: str) -> bool:
+    def mark_as_read(self, chat_id: str) -> bool:
         """
-        Marca a mensagem como lida (Tick Azul)
-        POST /message/read ou /chat/markMessageAsRead
+        Marca a conversa como lida (Tick Azul)
+        POST /message/read
+        Body: { "chatId": "55...@c.us" }
         """
-        if not self.base_url or not message_id: return False
+        if not self.base_url or not chat_id: return False
         
-        # Tenta endpoint padrão /message/read
+        # Garante formatação JID
+        jid = chat_id if "@" in chat_id else f"{self._clean_number(chat_id)}@c.us"
+        
         url = f"{self.base_url}/message/read"
-        payload = {"read": True, "id": message_id}
+        payload = {"chatId": jid}
         
         try:
             resp = requests.post(url, headers=self._get_headers(), json=payload, timeout=5)
