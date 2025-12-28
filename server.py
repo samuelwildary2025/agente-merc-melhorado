@@ -129,23 +129,19 @@ def transcribe_audio_uaz(message_id: str) -> Optional[str]:
     """
     if not message_id: return None
     
-    # 1. Obter URL do áudio via UAZ
-    audio_url = get_media_url_uaz(message_id)
-    if not audio_url:
-        logger.error(f"❌ [NOVO CODIGO v1.6.0] FALHA AO OBTER URL DO AUDIO: {message_id}")
+    # 1. Obter Base64 do áudio via API
+    media_data = whatsapp.get_media_base64(message_id)
+    if not media_data or not media_data.get("base64"):
+        logger.error(f"❌ [NOVO CÓDIGO 1.6.0] Falha ao obter Base64: {message_id}")
         return None
     
     try:
         logger.info(f"🎧 Transcrevendo áudio com Gemini: {message_id}")
         
-        # 2. Baixar o áudio
-        audio_response = requests.get(audio_url, timeout=20)
-        audio_response.raise_for_status()
-        audio_data = audio_response.content
-        
-        # Detectar tipo de áudio pelo content-type ou extensão
-        content_type = audio_response.headers.get('content-type', 'audio/ogg')
-        mime_type_clean = content_type.split(';')[0].strip()
+        # 2. Decodificar Base64
+        import base64
+        audio_data = base64.b64decode(media_data["base64"])
+        mime_type_clean = media_data.get("mimetype", "audio/ogg").split(";")[0].strip()
         
         logger.info(f"📤 Uploading to Gemini with mime_type: {mime_type_clean}")
         
