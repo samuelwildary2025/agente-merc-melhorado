@@ -39,7 +39,7 @@ from tools.redis_tools import (
 
 logger = setup_logger(__name__)
 
-app = FastAPI(title="Agente de Supermercado", version="1.5.5")
+app = FastAPI(title="Agente de Supermercado", version="1.6.0")
 
 # --- Models ---
 class WhatsAppMessage(BaseModel):
