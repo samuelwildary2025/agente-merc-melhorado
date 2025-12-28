@@ -125,12 +125,17 @@ def process_pdf_uaz(message_id: str) -> Optional[str]:
 def transcribe_audio_uaz(message_id: str) -> Optional[str]:
     """
     Transcreve áudio usando Google Gemini.
-    Primeiro baixa o áudio via UAZ, depois envia para Gemini transcrever.
+    Baixa o áudio em Base64 via API, salva em disco e envia para Gemini.
     """
     if not message_id: return None
     
+    logger.info(f"🎤 DEBUG TRANSCRIBE: Iniciando para ID {message_id}")
+
     # 1. Obter Base64 do áudio via API
     media_data = whatsapp.get_media_base64(message_id)
+    
+    logger.info(f"🎤 DEBUG TRANSCRIBE: Retorno API = {type(media_data)}")
+    
     if not media_data or not media_data.get("base64"):
         logger.error(f"❌ [NOVO CÓDIGO 1.6.0] Falha ao obter Base64: {message_id}")
         return None

@@ -85,8 +85,11 @@ class WhatsAppAPI:
             "return_base64": True
         }
         
+        logger.info(f"🌐 DEBUG API CALL: {url} | ID: {message_id}")
+        
         try:
-            resp = requests.post(url, headers=self._get_headers(), json=payload, timeout=30) # Timeout maior para download
+            resp = requests.post(url, headers=self._get_headers(), json=payload, timeout=30)
+            logger.info(f"🌐 DEBUG API RESPONSE: Status={resp.status_code}") # Timeout maior para download
             if resp.status_code == 200:
                 data = resp.json()
                 # A API retorna { success: true, data: { base64: "...", mimetype: "..." } }
