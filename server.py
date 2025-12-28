@@ -125,26 +125,22 @@ def process_pdf_uaz(message_id: str) -> Optional[str]:
 def transcribe_audio_uaz(message_id: str) -> Optional[str]:
     """
     Transcreve áudio usando Google Gemini.
-    Primeiro baixa o áudio via UAZ, depois envia para Gemini transcrever.
+    Baixa o áudio em Base64 via API, salva em disco e envia para Gemini.
     """
     if not message_id: return None
     
-    # 1. Obter URL do áudio via UAZ
-    audio_url = get_media_url_uaz(message_id)
-    if not audio_url:
-        logger.error(f"❌ Não foi possível obter URL do áudio: {message_id}")
+    # 1. Obter Base64 do áudio via API
+    media_data = whatsapp.get_media_base64(message_id)
+    if not media_data or not media_data.get("base64"):
+        logger.error(f"❌ Não foi possível obter áudio (Base64): {message_id}")
         return None
     
     try:
         logger.info(f"🎧 Transcrevendo áudio com Gemini: {message_id}")
         
-        # 2. Baixar o áudio
-        audio_response = requests.get(audio_url, timeout=20)
-        audio_response.raise_for_status()
-        audio_data = audio_response.content
-        
-        # Detectar tipo de áudio pelo content-type ou extensão
-        content_type = audio_response.headers.get('content-type', 'audio/ogg')
+        import base64
+        audio_bytes = base64.b64decode(media_data["base64"])
+        content_type = media_data.get("mimetype", "audio/ogg")
         
         # 3. Usar Google Gemini para transcrever
         from google import genai
@@ -167,7 +163,7 @@ def transcribe_audio_uaz(message_id: str) -> Optional[str]:
         
         # Salvar temporariamente
         with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
-            tmp.write(audio_data)
+            tmp.write(audio_bytes)
             tmp_path = tmp.name
         
         try:

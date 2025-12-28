@@ -66,28 +66,33 @@ class WhatsAppAPI:
         except Exception:
             return False
 
-    def get_media_url(self, message_id: str) -> Optional[str]:
+    def get_media_base64(self, message_id: str) -> Optional[Dict[str, str]]:
         """
-        Obtém link para download de mídia
+        Obtém mídia em Base64
         POST /message/download
+        Retorna dict com 'base64' e 'mimetype'
         """
         if not self.base_url: return None
         
         url = f"{self.base_url}/message/download"
         payload = {
             "id": message_id,
-            "return_link": True,
-            "return_base64": False
+            "return_link": False,
+            "return_base64": True
         }
         
         try:
-            resp = requests.post(url, headers=self._get_headers(), json=payload, timeout=15)
+            resp = requests.post(url, headers=self._get_headers(), json=payload, timeout=30) # Timeout maior para download
             if resp.status_code == 200:
                 data = resp.json()
-                # Tenta pegar fileURL ou url, dependendo do retorno da API
-                return data.get("fileURL") or data.get("url")
+                # A API retorna { success: true, data: { base64: "...", mimetype: "..." } }
+                if data.get("success") and "data" in data:
+                    return data["data"]
+                # Ou pode retornar direto no root se a versão for diferente
+                if "base64" in data:
+                    return data
             else:
-                logger.warning(f"⚠️ Erro API Mídia ({resp.status_code}): {resp.text}")
+                logger.warning(f"⚠️ Erro API Mídia ({resp.status_code}): {resp.text[:200]}")
         except Exception as e:
             logger.error(f"Erro ao obter mídia WhatsApp ({message_id}): {e}")
             
