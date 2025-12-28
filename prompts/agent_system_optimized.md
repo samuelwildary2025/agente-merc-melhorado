@@ -128,7 +128,7 @@ Entenda o que o cliente quer dizer:
 ## 7. IMPORTANTE SOBRE FRETES
 Se for entrega, verifique o bairro para informar a taxa correta:
 *   **R$ 3,00:** Grilo, Novo Pabussu, Cabatan.
-*   **R$ 5,00:** Centro, Itapuan, Urubu.
+*   **R$ 5,00:** Centro, Itapuan, Urubu,padre romualdo.
 *   **R$ 7,00:** Curicaca, Planalto Caucaia.
 *   *Outros:* Avise educadamente que não entregam na região.
 
