@@ -21,7 +21,8 @@ class WhatsAppAPI:
             "Content-Type": "application/json",
             "apikey": self.token,
             "token": self.token,
-            "Authorization": f"Bearer {self.token}"
+            "Authorization": f"Bearer {self.token}",
+            "X-Instance-Token": self.token # Header específico confirmado no teste
         }
 
     def _clean_number(self, phone: str) -> str:
