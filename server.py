@@ -584,6 +584,12 @@ async def webhook(req: Request, tasks: BackgroundTasks):
 
         if not tel or not txt: 
             logger.warning(f"⚠️ IGNORED | Tel: {tel} | Txt: {txt} | PayloadKeys: {list(pl.keys())}")
+            # DUMP DE DEBUG
+            try:
+                import json
+                logger.warning(f"🐛 PAYLOAD DUMP: {json.dumps(pl, default=str)[:2000]}")
+            except: pass
+            
             return JSONResponse(content={"status":"ignored"})
         
         logger.info(f"In: {tel} | {data['message_type']} | {txt[:50]}")
