@@ -495,6 +495,7 @@ def process_async(tel, msg, mid=None):
         if mid:
             logger.info(f"👀 Marcando mensagem {mid} como lida...")
             whatsapp.mark_as_read(mid)
+            time.sleep(0.8) # Delay tático: Garante que o usuário veja o AZUL antes de ver o "Digitando..."
 
         # 3. Começar a "Digitar"
         send_presence(num, "composing")
