@@ -89,6 +89,20 @@ def push_message_to_buffer(telefone: str, mensagem: str, message_id: str = None,
         return False
 
 
+def get_buffer_length(telefone: str) -> int:
+    """Retorna o tamanho atual do buffer de mensagens para o telefone."""
+    client = get_redis_client()
+    if client is None:
+        # Fallback em memória
+        msgs = _local_buffer.get(telefone) or []
+        return len(msgs)
+    try:
+        return int(client.llen(buffer_key(telefone)))
+    except redis.exceptions.RedisError as e:
+        logger.error(f"Erro ao consultar tamanho do buffer: {e}")
+        return 0
+
+
 def pop_all_messages(telefone: str) -> Tuple[List[str], Optional[str]]:
     """
     Obtém todas as mensagens do buffer e limpa a chave.
