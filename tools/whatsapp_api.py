@@ -15,10 +15,13 @@ class WhatsAppAPI:
         if not self.base_url:
             logger.warning("WHATSAPP_API_BASE_URL não configurado!")
             
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self):
+        # Tenta cobrir vários padrões de auth de APIs de WhatsApp
         return {
             "Content-Type": "application/json",
-            "X-Instance-Token": self.token or ""
+            "apikey": self.token,
+            "token": self.token,
+            "Authorization": f"Bearer {self.token}"
         }
 
     def _clean_number(self, phone: str) -> str:

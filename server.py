@@ -145,6 +145,9 @@ def transcribe_audio_uaz(message_id: str) -> Optional[str]:
         
         # Detectar tipo de áudio pelo content-type ou extensão
         content_type = audio_response.headers.get('content-type', 'audio/ogg')
+        mime_type_clean = content_type.split(';')[0].strip()
+        
+        logger.info(f"📤 Uploading to Gemini with mime_type: {mime_type_clean}")
         
         # 3. Usar Google Gemini para transcrever
         from google import genai
@@ -163,7 +166,7 @@ def transcribe_audio_uaz(message_id: str) -> Optional[str]:
             'audio/wav': '.wav',
             'audio/webm': '.webm',
         }
-        ext = ext_map.get(content_type.split(';')[0], '.ogg')
+        ext = ext_map.get(mime_type_clean, '.ogg')
         
         # Salvar temporariamente
         with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
@@ -171,8 +174,11 @@ def transcribe_audio_uaz(message_id: str) -> Optional[str]:
             tmp_path = tmp.name
         
         try:
-            # Upload do arquivo para Gemini
-            audio_file = client.files.upload(file=tmp_path)
+            # Upload do arquivo para Gemini com MIME TYPE explícito
+            audio_file = client.files.upload(
+                file=tmp_path,
+                config={'mime_type': mime_type_clean}
+            )
             
             # Transcrever usando Gemini
             response = client.models.generate_content(
