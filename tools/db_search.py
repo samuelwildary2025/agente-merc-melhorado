@@ -5,6 +5,14 @@ from config.logger import setup_logger
 
 logger = setup_logger(__name__)
 
+def _strip_accents(s: str) -> str:
+    """Remove acentos de uma string de forma simples, sem dependências externas."""
+    import unicodedata
+    if not s:
+        return s
+    nfkd = unicodedata.normalize("NFKD", s)
+    return "".join(c for c in nfkd if not unicodedata.combining(c))
+
 def search_products_postgres(query: str) -> str:
     """
     Busca produtos no banco PostgreSQL (substituto do smart-responder).
@@ -87,6 +95,43 @@ def search_products_postgres(query: str) -> str:
                 for i, r in enumerate(results):
                     score_fmt = f"{r.get('score', 0):.2f}" if 'score' in r else "N/A"
                     logger.info(f"   {i+1}. {r.get('nome')} (EAN: {r.get('ean')}) [Score: {score_fmt}]")
+                
+                # Fallback: tentar novamente com query sem acentos (ex: 'pão' -> 'pao')
+                if not results and len(query) >= 3:
+                    query_norm = _strip_accents(query)
+                    if query_norm and query_norm != query:
+                        logger.info(f"🔄 Fallback sem acento: tentando '{query_norm}'")
+                        if len(query_norm) < 3:
+                            term = f"%{query_norm}%"
+                            sql = f"""
+                                SELECT ean, nome
+                                FROM "{table_name}"
+                                WHERE nome_unaccent ILIKE %s OR nome ILIKE %s
+                                ORDER BY LENGTH(nome) ASC
+                                LIMIT 10
+                            """
+                            cur.execute(sql, (term, term))
+                        else:
+                            sql = f"""
+                                SELECT ean, nome, SIMILARITY(nome_unaccent, %s) as score
+                                FROM "{table_name}"
+                                WHERE 
+                                    nome_unaccent ILIKE %s
+                                    OR SIMILARITY(nome_unaccent, %s) > 0.3
+                                ORDER BY 
+                                    (CASE WHEN nome_unaccent ILIKE %s THEN 1 ELSE 0 END) DESC,
+                                    score DESC,
+                                    LENGTH(nome) ASC
+                                LIMIT 8
+                            """
+                            term_ilike = f"%{query_norm}%"
+                            term_starts_with = f"{query_norm}%"
+                            cur.execute(sql, (query_norm, term_ilike, query_norm, term_starts_with))
+                        results = cur.fetchall()
+                        logger.info(f"🔍 [POSTGRES] Fallback por '{query_norm}' retornou {len(results)} resultados:")
+                        for i, r in enumerate(results):
+                            score_fmt = f"{r.get('score', 0):.2f}" if 'score' in r else "N/A"
+                            logger.info(f"   {i+1}. {r.get('nome')} (EAN: {r.get('ean')}) [Score: {score_fmt}]")
                 
                 if not results:
                     return "Nenhum produto encontrado com esse termo."
