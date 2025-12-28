@@ -225,24 +225,11 @@ def _extract_incoming(payload: Dict[str, Any]) -> Dict[str, Any]:
     # ADAPTAÇÃO: Se o payload tiver uma chave 'message' (payload aninhado extra)
     # Ex: { "event": "message", "data": { "instanceId": "...", "message": { ... } } }
     if "message" in payload and isinstance(payload["message"], dict):
-        # Mas cuidado: às vezes 'message' é apenas um campo, não o objeto inteiro desejado.
-        # Vamos verificar se 'message' tem campos chaves como 'key', 'messageTimestamp' ou 'extendedTextMessage'
-        # Ou se é um formato simplificado
-        sub_msg = payload["message"]
-        # Se sub_msg tiver 'conversation' ou 'extendedTextMessage', é a estrutura bruta do Baileys
-        # Se tiver 'body' ou 'from', é a estrutura simplificada
-        
-        # Vamos tentar usar esse sub-objeto como fonte principal se ele parecer promissor
-        if sub_msg.get("key") or sub_msg.get("conversation") or sub_msg.get("body"):
-            # Mescla ou substitui, mas mantém instanceId se precisar
-            # Vamos priorizar o conteúdo de 'message'
-            payload.update(sub_msg)
-            # Remove a chave 'message' para evitar recursão ou confusão, mas mantém os dados extraídos
-            # payload = sub_msg # Perigoso se perder outros dados. Melhor update.
-            
-            try:
-                 logger.info(f"🔍 DEBUG EXTRACT DEEP: Keys={list(sub_msg.keys())}")
-            except: pass
+        # PROMOÇÃO DIRETA: Se existe 'message', usamos ela como payload principal
+        payload = payload["message"]
+        try:
+             logger.info(f"🔍 DEBUG EXTRACT PROMOTED MESSAGE: Keys={list(payload.keys())}")
+        except: pass
 
     def _clean_number(jid: Any) -> Optional[str]:
         """Extrai apenas o número de telefone de um JID válido."""
