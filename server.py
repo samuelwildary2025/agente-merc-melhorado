@@ -233,7 +233,7 @@ def _extract_incoming(payload: Dict[str, Any]) -> Dict[str, Any]:
         # Se tiver 'body' ou 'from', é a estrutura simplificada
         
         # Vamos tentar usar esse sub-objeto como fonte principal se ele parecer promissor
-        if sub_msg.get("key") or sub_msg.get("conversation") or sub_msg.get("body"):
+        if sub_msg.get("key") or sub_msg.get("conversation") or sub_msg.get("body") or sub_msg.get("from") or sub_msg.get("type"):
             # Mescla ou substitui, mas mantém instanceId se precisar
             # Vamos priorizar o conteúdo de 'message'
             payload.update(sub_msg)
