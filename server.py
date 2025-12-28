@@ -563,7 +563,7 @@ def buffer_loop(tel):
 
 # --- Endpoints ---
 @app.get("/")
-async def root(): return {"status":"online", "ver":"1.5.5"}
+async def root(): return {"status":"online", "ver":"1.6.0"}
 
 @app.get("/health")
 async def health(): return {"status":"healthy", "ts":datetime.now().isoformat()}
